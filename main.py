@@ -1,16 +1,34 @@
-# This is a sample Python script.
+from wagtail.admin.edit_handlers import FieldPanel
+from wagtail.core.models import Page
+from wagtail-speech.models import SpeechEnabledField
+from django.http import JsonResponse
+import os
+import pyautogui
 
-# Press Ctrl+F5 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+class VoiceControlledPage(Page):
+    title = SpeechEnabledField()  # Enables speech input for this field
+    description = SpeechEnabledField()
 
+    content_panels = Page.content_panels + [
+        FieldPanel('description'),
+    ]
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press F9 to toggle the breakpoint.
+def voice_command_handler(request):
+    if request.method == 'POST':
+        command = request.POST.get('command', '').lower()
 
+        if "open notepad" in command:
+            os.system("notepad")
+            response = "Opened Notepad."
+        elif "take screenshot" in command:
+            pyautogui.screenshot("screenshot.png")
+            response = "Screenshot saved."
+        elif "close window" in command:
+            pyautogui.hotkey("alt", "f4")
+            response = "Closed the active window."
+        else:
+            response = "Command not recognized."
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+        return JsonResponse({'response': response})
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    return JsonResponse({'error': 'Invalid request method.'})
